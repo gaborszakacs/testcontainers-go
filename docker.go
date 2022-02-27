@@ -653,12 +653,11 @@ func readTCPropsFile() TestContainersConfig {
 }
 
 // BuildImage will build and image from context and Dockerfile, then return the tag
-func (p *DockerProvider) BuildImage(ctx context.Context, img ImageBuildInfo, repoTag string) (string, error) {
-	if repoTag == "" {
-		repo := uuid.New()
-		tag := uuid.New()
-		repoTag = fmt.Sprintf("%s:%s", repo, tag)
-	}
+func (p *DockerProvider) BuildImage(ctx context.Context, img ImageBuildInfo) (string, error) {
+	repo := uuid.New()
+	tag := uuid.New()
+
+	repoTag := fmt.Sprintf("%s:%s", repo, tag)
 
 	buildContext, err := img.GetContext()
 	if err != nil {
@@ -666,10 +665,10 @@ func (p *DockerProvider) BuildImage(ctx context.Context, img ImageBuildInfo, rep
 	}
 
 	buildOptions := types.ImageBuildOptions{
-		BuildArgs:   img.GetBuildArgs(),
-		Dockerfile:  img.GetDockerfile(),
-		Context:     buildContext,
-		Tags:        []string{repoTag},
+		BuildArgs:  img.GetBuildArgs(),
+		Dockerfile: img.GetDockerfile(),
+		Context:    buildContext,
+		Tags:       []string{repoTag},
 		Remove:      true,
 		ForceRemove: true,
 	}
@@ -768,7 +767,7 @@ func (p *DockerProvider) CreateContainer(ctx context.Context, req ContainerReque
 	var platform *specs.Platform
 
 	if req.ShouldBuildImage() {
-		tag, err = p.BuildImage(ctx, &req, "")
+		tag, err = p.BuildImage(ctx, &req)
 		if err != nil {
 			return nil, err
 		}
